@@ -28,8 +28,6 @@
 
 #include "mongo/client/dbclient.h" // for the driver
 
-
-
 using mongo::BSONArray;
 using mongo::BSONArrayBuilder;
 using mongo::BSONObj;
@@ -43,7 +41,6 @@ GraspGenerationPlugin::GraspGenerationPlugin() :
     plannerStarted(false),
     plannerFinished(false),
     evaluatingGrasps(false)
-
 {
 
 }
@@ -187,14 +184,14 @@ void GraspGenerationPlugin::startPlanner()
     mHandObjectState->setRefTran(mObject->getTran());
     mHandObjectState->reset();
 
-//    mPlanner = new SimAnnPlanner(mHand);
-//    ((SimAnnPlanner*)mPlanner)->setModelState(mHandObjectState);
+    mPlanner = new SimAnnPlanner(mHand);
+    ((SimAnnPlanner*)mPlanner)->setModelState(mHandObjectState);
 
 //    mPlanner = new GuidedPlanner(mHand);
 //    ((SimAnnPlanner*)mPlanner)->setModelState(mHandObjectState);
 
-        mPlanner = new OnLinePlanner(mHand);
-        ((SimAnnPlanner*)mPlanner)->setModelState(mHandObjectState);
+//        mPlanner = new OnLinePlanner(mHand);
+//        ((SimAnnPlanner*)mPlanner)->setModelState(mHandObjectState);
 
 
 
