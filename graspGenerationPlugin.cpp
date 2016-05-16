@@ -259,17 +259,11 @@ void GraspGenerationPlugin::uploadResult(int result_idx)
     std::vector<SensorReading> sensorReadings;
     getSimHandSensors(graspItGUI->getMainWorld(), sensorReadings);
     std::cout << "num sensor readings: " << sensorReadings.size() << std::endl;
-    mongo::BSONObj sensorReadingBSONObj;
-
-    for(int i = 0; i < sensorReadings.size(); i++) {
-        sensorReadingBSONObj = toMongoSensorReading(sensorReadings.at(i));
-        std::cout << sensorReadingBSONObj << std::endl;
-    }
 
 
     graspItGUI->getIVmgr()->getViewer()->render();
 
-    BSONObj p = toMongoTactileGrasp(&gps, QString("ENERGY_CONTACT_QUALITY"));
+    BSONObj p = toMongoTactileGrasp(&gps, QString("ENERGY_CONTACT_QUALITY"), sensorReadings);
 
     c->insert(mongoCollName, p);
 
@@ -346,10 +340,16 @@ mongo::BSONObj GraspGenerationPlugin::toMongoTactileGrasp(GraspPlanningState *gp
     BSONObjBuilder grasp;
     toMongoGraspBuilder(gps, energyType, &grasp);
 
+    BSONArrayBuilder sensorReadingsBuilder;
 
-//    grasps.append("neighbor_grasps")
+    for(int i = 0; i < sensorReadings.size(); i++) {
 
+        sensorReadingsBuilder.append(toMongoSensorReading(sensorReadings.at(i)));
+//        std::cout << sensorReadingBSONObj << std::endl;
+    }
 
+    grasp.append("tactile_states", sensorReadingsBuilder.obj());
+    //    grasps.append("neighbor_grasps")
     // key: neighbour_grasps, value: {"string_idx": "mongo_object_id", "string_idx2": "mongo_object_id2"} store the neighbour grasps ahead of time and retrieve their ids
     // key:tactile, value: bsonObj[64] which tactile sensor is activated, idx of array does matter
     return grasp.obj();
