@@ -201,8 +201,8 @@ void GraspGenerationPlugin::startPlanner()
 
     mPlanner->resetPlanner();
 
-
-    mPlanner->startThread();
+    mPlanner->startPlanner();
+//    mPlanner->startThread();
     plannerStarted = true;
 }
 
