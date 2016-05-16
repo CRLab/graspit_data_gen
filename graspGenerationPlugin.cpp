@@ -293,7 +293,8 @@ mongo::BSONObj GraspGenerationPlugin::toMongoGrasp(GraspPlanningState *gps, QStr
     model.append("url", url.toStdString());
     model.append("material", material.toStdString());
     model.append("dimension", dimension);
-
+    // key: neighbour_grasps, value: {"string_idx": "mongo_object_id", "string_idx2": "mongo_object_id2"} store the neighbour grasps ahead of time and retrieve their ids
+    // key:tactile, value: float[64] which tactile sensor is activated, idx of array does matter
     grasp.append("model", model.obj());
     grasp.append("hand", hand->getDBName().toStdString());
     grasp.append("energy", energy.obj());
