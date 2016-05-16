@@ -40,13 +40,13 @@ using namespace mongo;
 
 struct SensorReading
 {
-    vec3 location;
+    vec3 translation;
     Quaternion orientation;
     double force;
-
+    // {"location": [x, y, z], "orientation"}
     void printMe() const {
         DBGA(" force: " << force <<
-             " {" << location.x() << ", " << location.y() << ", " << location.z() << "} " <<
+             " {" << translation.x() << ", " << translation.y() << ", " << translation.z() << "} " <<
              " [" << orientation.w << ", " << orientation.x << ", " << orientation.y << ", " << orientation.z << "]");
     }
 };
@@ -292,7 +292,7 @@ GraspGenerationPlugin::getSimHandSensors(World * w, std::vector<SensorReading> &
 
         SensorReading sr;
         sr.force = fz;
-        sr.location = sensorInHand.translation();
+        sr.translation = sensorInHand.translation();
         sr.orientation = sensorInHand.rotation();
         sensorReadings.push_back(sr);
     }
