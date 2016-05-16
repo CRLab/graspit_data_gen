@@ -255,14 +255,15 @@ void GraspGenerationPlugin::uploadResults()
 
 mongo::BSONObj GraspGenerationPlugin::toMongoGrasp(GraspPlanningState *gps, QString energyType)
 {
-    BSONObjBuilder grasp = toMongoGraspBuilder(gps, energyType);
+    BSONObjBuilder grasp;
+    toMongoGraspBuilder(gps, energyType, &grasp);
 
     return grasp.obj();
 }
 
-mongo::BSONObjBuilder GraspGenerationPlugin::toMongoGraspBuilder(GraspPlanningState *gps, QString energyType)
+void GraspGenerationPlugin::toMongoGraspBuilder(GraspPlanningState *gps, QString energyType, mongo::BSONObjBuilder *grasp)
 {
-    BSONObjBuilder grasp;
+
     BSONObjBuilder pose;
     BSONObjBuilder model;
     BSONObjBuilder energy;
@@ -302,13 +303,11 @@ mongo::BSONObjBuilder GraspGenerationPlugin::toMongoGraspBuilder(GraspPlanningSt
     model.append("dimension", dimension);
     // key: neighbour_grasps, value: {"string_idx": "mongo_object_id", "string_idx2": "mongo_object_id2"} store the neighbour grasps ahead of time and retrieve their ids
     // key:tactile, value: float[64] which tactile sensor is activated, idx of array does matter
-    grasp.append("model", model.obj());
-    grasp.append("hand", hand->getDBName().toStdString());
-    grasp.append("energy", energy.obj());
-    grasp.appendArray("dof", dof.arr());
-    grasp.append("pose", pose.obj());
-
-    return grasp;
+    grasp->append("model", model.obj());
+    grasp->append("hand", hand->getDBName().toStdString());
+    grasp->append("energy", energy.obj());
+    grasp->appendArray("dof", dof.arr());
+    grasp->append("pose", pose.obj());
 }
 
 
