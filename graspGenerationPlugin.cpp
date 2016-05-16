@@ -249,6 +249,10 @@ void GraspGenerationPlugin::uploadResults()
         graspItGUI->getIVmgr()->getViewer()->render();
         //usleep(1000000);
 
+        std::vector<SensorReading> sensorReadings;
+        getSimHandSensors(graspItGUI->getMainWorld(), sensorReadings);
+        std::cout << "num sensor readings: " << sensorReadings.size() << std::endl;
+
         BSONObj p = toMongoGrasp(&gps, QString("ENERGY_CONTACT_QUALITY"));
 
         c->insert(mongoCollName, p);
