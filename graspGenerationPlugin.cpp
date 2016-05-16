@@ -252,8 +252,15 @@ void GraspGenerationPlugin::uploadResults()
         std::vector<SensorReading> sensorReadings;
         getSimHandSensors(graspItGUI->getMainWorld(), sensorReadings);
         std::cout << "num sensor readings: " << sensorReadings.size() << std::endl;
+        mongo::BSONObj sensorReadingBSONObj;
 
-        BSONObj p = toMongoGrasp(&gps, QString("ENERGY_CONTACT_QUALITY"));
+        for(int i = 0; i < sensorReadings.size(); i++) {
+
+            sensorReadingBSONObj = toMongoSensorReading(sensorReadings.at(i));
+            std::cout << sensorReadingBSONObj << std::endl;
+        }
+
+        BSONObj p = toMongoTactileGrasp(&gps, QString("ENERGY_CONTACT_QUALITY"));
 
         c->insert(mongoCollName, p);
 
@@ -268,6 +275,31 @@ mongo::BSONObj GraspGenerationPlugin::toMongoGrasp(GraspPlanningState *gps, QStr
     toMongoGraspBuilder(gps, energyType, &grasp);
 
     return grasp.obj();
+}
+
+mongo::BSONObj GraspGenerationPlugin::toMongoSensorReading(SensorReading &sensorReading) {
+
+
+    BSONObjBuilder readingBSON;
+    BSONArrayBuilder translation;
+    BSONArrayBuilder orientation;
+
+    translation.append(sensorReading.translation.x())
+               .append(sensorReading.translation.y())
+               .append(sensorReading.translation.z());
+
+    orientation.append(sensorReading.orientation.w)
+               .append(sensorReading.orientation.x)
+               .append(sensorReading.orientation.y)
+               .append(sensorReading.orientation.z);
+    readingBSON.append("force", sensorReading.force);
+
+    readingBSON.append("translation", translation.obj());
+    readingBSON.append("orientation", orientation.obj());
+
+
+    return readingBSON.obj();
+
 }
 
 bool GraspGenerationPlugin::getSimHandSensors(World * w, std::vector<SensorReading> &sensorReadings) {

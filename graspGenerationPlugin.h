@@ -50,6 +50,8 @@ protected:
   void stepPlanner();
   mongo::BSONObj toMongoGrasp(GraspPlanningState *gps, QString energyType);
   mongo::BSONObj toMongoTactileGrasp(GraspPlanningState *gps, QString energyType);
+  mongo::BSONObj toMongoSensorReading(SensorReading &sensorReading);
+
   void toMongoGraspBuilder(GraspPlanningState *gps, QString energyType, mongo::BSONObjBuilder *grasp);
 
   bool getSimHandSensors(World * w, std::vector<SensorReading> &sensorReadings);
