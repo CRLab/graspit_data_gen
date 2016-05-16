@@ -15,7 +15,7 @@
 #include <include/EGPlanner/onLinePlanner.h>
 #include <include/EGPlanner/guidedPlanner.h>
 #include <include/EGPlanner/searchState.h>
-#include <include/EGPlanner/searchEnergy.h>
+#include <include/EGPlanner/energy/searchEnergy.h>
 
 #include <include/grasp.h>
 #include <include/triangle.h>
@@ -187,11 +187,16 @@ void GraspGenerationPlugin::startPlanner()
     mHandObjectState->setRefTran(mObject->getTran());
     mHandObjectState->reset();
 
-    mPlanner = new SimAnnPlanner(mHand);
-    ((SimAnnPlanner*)mPlanner)->setModelState(mHandObjectState);
+//    mPlanner = new SimAnnPlanner(mHand);
+//    ((SimAnnPlanner*)mPlanner)->setModelState(mHandObjectState);
 
 //    mPlanner = new GuidedPlanner(mHand);
 //    ((SimAnnPlanner*)mPlanner)->setModelState(mHandObjectState);
+
+        mPlanner = new OnLinePlanner(mHand);
+        ((SimAnnPlanner*)mPlanner)->setModelState(mHandObjectState);
+
+
 
     mPlanner->setEnergyType(ENERGY_CONTACT_QUALITY);
     mPlanner->setContactType(CONTACT_PRESET);
@@ -199,7 +204,8 @@ void GraspGenerationPlugin::startPlanner()
 
     mPlanner->resetPlanner();
 
-    mPlanner->startPlanner();
+
+    mPlanner->startThread();
     plannerStarted = true;
 }
 
@@ -215,8 +221,7 @@ void GraspGenerationPlugin::stepPlanner()
 void GraspGenerationPlugin::uploadResults()
 {
 
-    SearchEnergy *mEnergyCalculator = new SearchEnergy();
-    mEnergyCalculator->setType(ENERGY_CONTACT_QUALITY);
+    SearchEnergy *mEnergyCalculator = SearchEnergy::getSearchEnergy(ENERGY_CONTACT_QUALITY);
     mEnergyCalculator->setContactType(CONTACT_PRESET);
 
     int num_grasps = mPlanner->getListSize();
