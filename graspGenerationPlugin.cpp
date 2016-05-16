@@ -266,9 +266,7 @@ mongo::BSONObj GraspGenerationPlugin::toMongoGrasp(GraspPlanningState *gps, QStr
     return grasp.obj();
 }
 
-bool
-GraspGenerationPlugin::getSimHandSensors(World * w, std::vector<SensorReading> &sensorReadings)
-{
+bool GraspGenerationPlugin::getSimHandSensors(World * w, std::vector<SensorReading> &sensorReadings) {
     for(int sensorInd = 0; sensorInd < w->getNumSensors(); sensorInd ++) {
         QString str;
         QTextStream qts(&str, QIODevice::WriteOnly);
@@ -298,6 +296,20 @@ GraspGenerationPlugin::getSimHandSensors(World * w, std::vector<SensorReading> &
     }
 
     return true;
+}
+
+mongo::BSONObj GraspGenerationPlugin::toMongoTactileGrasp(GraspPlanningState *gps, QString energyType) {
+    BSONObjBuilder grasp;
+    toMongoGraspBuilder(gps, energyType, &grasp);
+
+
+//    grasps.append("neighbor_grasps")
+
+
+    // key: neighbour_grasps, value: {"string_idx": "mongo_object_id", "string_idx2": "mongo_object_id2"} store the neighbour grasps ahead of time and retrieve their ids
+    // key:tactile, value: bsonObj[64] which tactile sensor is activated, idx of array does matter
+    return grasp.obj();
+
 }
 
 void GraspGenerationPlugin::toMongoGraspBuilder(GraspPlanningState *gps, QString energyType, mongo::BSONObjBuilder *grasp)
@@ -340,8 +352,6 @@ void GraspGenerationPlugin::toMongoGraspBuilder(GraspPlanningState *gps, QString
     model.append("url", url.toStdString());
     model.append("material", material.toStdString());
     model.append("dimension", dimension);
-    // key: neighbour_grasps, value: {"string_idx": "mongo_object_id", "string_idx2": "mongo_object_id2"} store the neighbour grasps ahead of time and retrieve their ids
-    // key:tactile, value: float[64] which tactile sensor is activated, idx of array does matter
     grasp->append("model", model.obj());
     grasp->append("hand", hand->getDBName().toStdString());
     grasp->append("energy", energy.obj());
