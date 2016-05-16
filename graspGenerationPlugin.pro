@@ -18,10 +18,15 @@ OBJECTS_DIR = build
    error("GRASPIT environment variable not set")
 }
 
+!exists($(MONGO_CXX_PATH)) {
+   error("MONGO_CXX_PATH environment variable not set")
+    #/home/jvarley/graspit_data_gen/mongo-cxx-driver/
+}
+
 INCLUDEPATH += $(GRASPIT) $(GRASPIT)/qjson4 $(GRASPIT)/include $(GRASPIT)/cmdline
 
 # Mongo Driver headers
-INCLUDEPATH += /home/timchunght/graspit_data_gen/mongo-cxx-driver/build/install/include
+INCLUDEPATH += $(MONGO_CXX_PATH)/build/install/include
 
 
 DEPENDPATH += $(GRASPIT)/src 
@@ -34,4 +39,4 @@ SOURCES += \
     graspGenerationPlugin.cpp
 
 # Mongo Driver shared lib
-LIBS += -L/home/timchunght/graspit_data_gen/mongo-cxx-driver/build/install/lib -lmongoclient
+LIBS += -L$(MONGO_CXX_PATH)/build/install/lib -lmongoclient

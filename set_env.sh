@@ -1,3 +1,4 @@
+export MONGO_CXX_PATH=~/graspit_data_gen/mongo-cxx-driver/
 export GRASPIT=~/graspit
 export GRASPIT_PLUGIN_DIR=$PWD/lib 
 export API_KEY=robolabapi
