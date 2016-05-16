@@ -5,5 +5,5 @@ import subprocess
 
 
 while True:
-    cmd = "/home/timchunght/graspit/bin/graspit -p libgraspGenerationPlugin  -c mug.iv"
+    cmd = "/home/timchunght/graspit/build/graspit_simulator -p libgraspGenerationPlugin  -c mug.iv"
     subprocess.call(cmd.split())

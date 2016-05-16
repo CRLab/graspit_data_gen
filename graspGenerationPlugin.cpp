@@ -255,6 +255,13 @@ void GraspGenerationPlugin::uploadResults()
 
 mongo::BSONObj GraspGenerationPlugin::toMongoGrasp(GraspPlanningState *gps, QString energyType)
 {
+    BSONObjBuilder grasp = toMongoGraspBuilder(gps, energyType);
+
+    return grasp.obj();
+}
+
+mongo::BSONObjBuilder GraspGenerationPlugin::toMongoGraspBuilder(GraspPlanningState *gps, QString energyType)
+{
     BSONObjBuilder grasp;
     BSONObjBuilder pose;
     BSONObjBuilder model;
@@ -301,6 +308,7 @@ mongo::BSONObj GraspGenerationPlugin::toMongoGrasp(GraspPlanningState *gps, QStr
     grasp.appendArray("dof", dof.arr());
     grasp.append("pose", pose.obj());
 
-    return grasp.obj();
+    return grasp;
 }
+
 

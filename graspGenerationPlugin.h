@@ -47,6 +47,7 @@ protected:
   void uploadResults();
   void stepPlanner();
   mongo::BSONObj toMongoGrasp(GraspPlanningState *gps, QString energyType);
+  mongo::BSONObjBuilder toMongoGraspBuilder(GraspPlanningState *gps, QString energyType);
 
 private:
 
