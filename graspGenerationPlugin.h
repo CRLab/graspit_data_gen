@@ -20,8 +20,6 @@ class Hand;
 class SensorReading;
 class World;
 
-
-
 //! Main class, combining a ROS node with a GraspIt! interface
 /*! Note that this class inherits from GraspIt's Plugin class and implements the necessary functions to serve
   as a GraspIt plugin. See include/plugin.h in the GraspIt code for the base class.
@@ -44,6 +42,8 @@ public:
   //! Simply calls ros::spinOnce() to process the ROS event loop
   virtual int mainLoop();
 
+  mongo::BSONObj buildParentGrasp(int result_idx);
+  std::vector<mongo::BSONObj> buildChildren(mongo::BSONObj parent);
 protected:
   void startPlanner();
   void uploadResult(int result_idx);

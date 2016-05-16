@@ -218,9 +218,9 @@ void GraspGenerationPlugin::stepPlanner()
     }
 }
 
-void GraspGenerationPlugin::uploadResult(int result_idx)
-{
 
+BSONObj GraspGenerationPlugin::buildParentGrasp(int result_idx)
+{
     SearchEnergy *mEnergyCalculator = SearchEnergy::getSearchEnergy(ENERGY_CONTACT_QUALITY);
     mEnergyCalculator->setContactType(CONTACT_PRESET);
 
@@ -231,9 +231,6 @@ void GraspGenerationPlugin::uploadResult(int result_idx)
     }
 
     std::cout << "Found " << mPlanner->getListSize() << " Grasps. " << std::endl;
-    std::string mongoCollName = (dbName + QString(".grasps")).toStdString();
-    std::cout <<"Uploading to Mongo Coll: " << mongoCollName << std::endl;
-
 
     GraspPlanningState gps = mPlanner->getGrasp(result_idx);
     gps.execute(mHand);
@@ -266,15 +263,66 @@ void GraspGenerationPlugin::uploadResult(int result_idx)
         std::cout << sensorReadingBSONObj << std::endl;
     }
 
-
     graspItGUI->getIVmgr()->getViewer()->render();
 
-    BSONObj p = toMongoTactileGrasp(&gps, QString("ENERGY_CONTACT_QUALITY"));
+    return toMongoTactileGrasp(&gps, QString("ENERGY_CONTACT_QUALITY"));
 
+
+}
+
+std::vector<BSONObj> GraspGenerationPlugin::buildChildren(BSONObj parent)
+{
+    std::vector<BSONObj> children;
+    //    //peturb and save
+    //    transf perturbation = rotXYZ(0.25, 0, 0);
+    ////    transf perturbation = rotXYZ(0, 0.25, 0);
+    ////    transf perturbation = rotXYZ(0, 0, 0.25);
+
+    ////    transf perturbation = rotXYZ(-0.25, 0, 0);
+    ////    transf perturbation = rotXYZ(0, -0.25, 0,0);
+    ////    transf perturbation = rotXYZ(0, 0, -0.25);
+
+    //    //Disable collisions between the ground truth object and the hand
+    //      graspItGUI->getMainWorld()->toggleAllCollisions(false);
+    //      sleep(1.0);
+
+    //      graspItGUI->getIVmgr()->getViewer()->render();
+    //      transf currentTran = mHand->getTran();
+    //      transf newTran = perturbation* currentTran  ;
+
+    //      mHand->setTran(newTran);
+
+    //      mHand->autoGrasp(true, -1.0, false);
+    //      mHand->approachToContact(-200);
+    //      graspItGUI->getIVmgr()->getViewer()->render();
+
+    //      graspItGUI->getMainWorld()->toggleAllCollisions(true);
+    //      sleep(1);
+
+    //      mHand->approachToContact(200);
+    //      mHand->autoGrasp(true, 1.0, false);
+    //      graspItGUI->getIVmgr()->getViewer()->render();
+    return children;
+}
+
+void GraspGenerationPlugin::uploadResult(int result_idx)
+{
+    BSONObj p = buildParentGrasp(result_idx);
+
+    //generate lots of children
+    std::vector<BSONObj> children = buildChildren(p);
+
+    //attach children to parent
+    //for loop
+
+    //upload children
+    //for loop
+
+    // parent died ;(
+    //upload parent
+    std::string mongoCollName = (dbName + QString(".grasps")).toStdString();
+    std::cout <<"Uploading to Mongo Coll: " << mongoCollName << std::endl;
     c->insert(mongoCollName, p);
-
-    //peturb and save
-
 }
 
 mongo::BSONObj GraspGenerationPlugin::toMongoGrasp(GraspPlanningState *gps, QString energyType)
