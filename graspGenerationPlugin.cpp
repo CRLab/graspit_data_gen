@@ -21,6 +21,7 @@
 #include <include/debug.h>
 
 #include <include/grasp.h>
+#include "quality.h"
 #include <include/triangle.h>
 
 #include <cmdline/cmdline.h>
@@ -203,9 +204,8 @@ void GraspGenerationPlugin::startPlanner()
     mPlanner->setMaxSteps(70000);
 
     mPlanner->resetPlanner();
-
     mPlanner->startPlanner();
-//    mPlanner->startThread();
+
     plannerStarted = true;
 }
 
@@ -225,14 +225,12 @@ void GraspGenerationPlugin::uploadResult(int result_idx)
     mEnergyCalculator->setContactType(CONTACT_PRESET);
 
 
-    int num_grasps = mPlanner->getListSize();
-
-    if (result_idx == num_grasps)
+    if (result_idx == mPlanner->getListSize())
     {
         assert(false);
     }
 
-    std::cout << "Found " << num_grasps << " Grasps. " << std::endl;
+    std::cout << "Found " << mPlanner->getListSize() << " Grasps. " << std::endl;
     std::string mongoCollName = (dbName + QString(".grasps")).toStdString();
     std::cout <<"Uploading to Mongo Coll: " << mongoCollName << std::endl;
 
@@ -240,22 +238,32 @@ void GraspGenerationPlugin::uploadResult(int result_idx)
     GraspPlanningState gps = mPlanner->getGrasp(result_idx);
     gps.execute(mHand);
     mHand->autoGrasp(render_it, 1.0, false);
+
     bool is_legal;
     double new_planned_energy;
-
     mEnergyCalculator->analyzeCurrentPosture(mHand,graspItGUI->getMainWorld()->getGB(0),is_legal,new_planned_energy,false );
     gps.setEnergy(new_planned_energy);
     gps.saveCurrentHandState();
+
+    QualEpsilon mQualEpsilon(mHand->getGrasp(), QString("Grasp_recorder_qm"), "L1 Norm");
+    double epsilonQuality = mQualEpsilon.evaluate();
+
+    QualVolume mQualVolume(mHand->getGrasp(), QString("Grasp_recorder_qm"), "L1 Norm");
+    double volumeQuality = mQualVolume.evaluate();
+
+    gps.setVolume(volumeQuality);
+    gps.setEpsilonQuality(epsilonQuality);
 
     graspItGUI->getIVmgr()->getViewer()->render();
 
     std::vector<SensorReading> sensorReadings;
     getSimHandSensors(graspItGUI->getMainWorld(), sensorReadings);
-    std::cout << "num sensor readings: " << sensorReadings.size() << std::endl;
 
     BSONObj p = toMongoGrasp(&gps, QString("ENERGY_CONTACT_QUALITY"));
 
     c->insert(mongoCollName, p);
+
+    //peturb and save
 
 }
 
@@ -336,8 +344,9 @@ void GraspGenerationPlugin::toMongoGraspBuilder(GraspPlanningState *gps, QString
         dof.append(dofVals[dof_idx]);
     }
 
-    energy.append("type", "ENERGY_CONTACT_QUALITY");
-    energy.append("value", gps->getEnergy());
+    energy.append("ENERGY_CONTACT_QUALITY",  gps->getEnergy());
+    energy.append("Volume", gps->getVolume());
+    energy.append("Epsilon", gps->getEpsilonQuality());
 
     translation.append(hand_pose.translation().x()).append(hand_pose.translation().y()).append(hand_pose.translation().z());
     rotation.append(hand_pose.rotation().w).append(hand_pose.rotation().x).append(hand_pose.rotation().y).append(hand_pose.rotation().z);
