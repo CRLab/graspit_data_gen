@@ -55,7 +55,8 @@ GraspGenerationPlugin::GraspGenerationPlugin() :
     mPlanner(NULL),
     plannerStarted(false),
     plannerFinished(false),
-    evaluatingGrasps(false)
+    evaluatingGrasps(false),
+    currently_uploading_result_idx(0)
 {
 
 }
@@ -162,7 +163,8 @@ int GraspGenerationPlugin::mainLoop()
     //save grasps
     else if(plannerStarted && plannerFinished && (!evaluatingGrasps))
     {
-        uploadResults();
+        uploadResult(currently_uploading_result_idx);
+        currently_uploading_result_idx++;
     }
 
   return 0;
@@ -180,12 +182,6 @@ void GraspGenerationPlugin::startPlanner()
 
     modelJson = loader.loadRandomModel();
 
-    std::cout << "FINISHED LOADING DEBUG" << std::endl;
-//    graspItGUI->getMainWorld()->importBody("GraspableBody", mesh_filepath);
-    //this is fine for now, in the future, we may change this
-//    graspItGUI->getMainWorld()->importRobot("/home/timchunght/graspit/models/robots/pr2_gripper_2010/pr2_gripper_2010.xml");
-//    graspItGUI->getMainWorld()->importRobot("/home/timchunght/graspit/models/robots/Barrett/Barrett.xml");
-
     mObject = graspItGUI->getMainWorld()->getGB(0);
     mObject->setMaterial(5);//rubber
 
@@ -201,7 +197,6 @@ void GraspGenerationPlugin::startPlanner()
 
     mPlanner = new SimAnnPlanner(mHand);
     ((SimAnnPlanner*)mPlanner)->setModelState(mHandObjectState);
-
 
     mPlanner->setEnergyType(ENERGY_CONTACT_QUALITY);
     mPlanner->setContactType(CONTACT_PRESET);
@@ -223,50 +218,54 @@ void GraspGenerationPlugin::stepPlanner()
     }
 }
 
-void GraspGenerationPlugin::uploadResults()
+void GraspGenerationPlugin::uploadResult(int result_idx)
 {
 
     SearchEnergy *mEnergyCalculator = SearchEnergy::getSearchEnergy(ENERGY_CONTACT_QUALITY);
     mEnergyCalculator->setContactType(CONTACT_PRESET);
 
+
     int num_grasps = mPlanner->getListSize();
+
+    if (result_idx == num_grasps)
+    {
+        assert(false);
+    }
+
     std::cout << "Found " << num_grasps << " Grasps. " << std::endl;
     std::string mongoCollName = (dbName + QString(".grasps")).toStdString();
     std::cout <<"Uploading to Mongo Coll: " << mongoCollName << std::endl;
 
-    for(int i=0; i < num_grasps; i++)
-    {
-        GraspPlanningState gps = mPlanner->getGrasp(i);
-        gps.execute(mHand);
-        mHand->autoGrasp(render_it, 1.0, false);
-        bool is_legal;
-        double new_planned_energy;
 
-        mEnergyCalculator->analyzeCurrentPosture(mHand,graspItGUI->getMainWorld()->getGB(0),is_legal,new_planned_energy,false );
-        gps.setEnergy(new_planned_energy);
-        gps.saveCurrentHandState();
+    GraspPlanningState gps = mPlanner->getGrasp(result_idx);
+    gps.execute(mHand);
+    mHand->autoGrasp(render_it, 1.0, false);
+    bool is_legal;
+    double new_planned_energy;
 
-        graspItGUI->getIVmgr()->getViewer()->render();
-        //usleep(1000000);
+    mEnergyCalculator->analyzeCurrentPosture(mHand,graspItGUI->getMainWorld()->getGB(0),is_legal,new_planned_energy,false );
+    gps.setEnergy(new_planned_energy);
+    gps.saveCurrentHandState();
 
-        std::vector<SensorReading> sensorReadings;
-        getSimHandSensors(graspItGUI->getMainWorld(), sensorReadings);
-        std::cout << "num sensor readings: " << sensorReadings.size() << std::endl;
-        mongo::BSONObj sensorReadingBSONObj;
 
-        for(int i = 0; i < sensorReadings.size(); i++) {
+    std::vector<SensorReading> sensorReadings;
+    getSimHandSensors(graspItGUI->getMainWorld(), sensorReadings);
+    std::cout << "num sensor readings: " << sensorReadings.size() << std::endl;
+    mongo::BSONObj sensorReadingBSONObj;
 
-            sensorReadingBSONObj = toMongoSensorReading(sensorReadings.at(i));
-            std::cout << sensorReadingBSONObj << std::endl;
-        }
+    for(int i = 0; i < sensorReadings.size(); i++) {
 
-        BSONObj p = toMongoTactileGrasp(&gps, QString("ENERGY_CONTACT_QUALITY"));
-
-        c->insert(mongoCollName, p);
-
+        sensorReadingBSONObj = toMongoSensorReading(sensorReadings.at(i));
+        std::cout << sensorReadingBSONObj << std::endl;
     }
-    // TODO: find a better way to die
-    assert(false);
+
+
+    graspItGUI->getIVmgr()->getViewer()->render();
+
+    BSONObj p = toMongoTactileGrasp(&gps, QString("ENERGY_CONTACT_QUALITY"));
+
+    c->insert(mongoCollName, p);
+
 }
 
 mongo::BSONObj GraspGenerationPlugin::toMongoGrasp(GraspPlanningState *gps, QString energyType)
@@ -334,7 +333,7 @@ bool GraspGenerationPlugin::getSimHandSensors(World * w, std::vector<SensorReadi
     return true;
 }
 
-mongo::BSONObj GraspGenerationPlugin::toMongoTactileGrasp(GraspPlanningState *gps, QString energyType) {
+mongo::BSONObj GraspGenerationPlugin::toMongoTactileGrasp(GraspPlanningState *gps, QString energyType,  std::vector<SensorReading> &sensorReadings) {
     BSONObjBuilder grasp;
     toMongoGraspBuilder(gps, energyType, &grasp);
 
