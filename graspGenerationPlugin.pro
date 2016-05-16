@@ -18,7 +18,7 @@ OBJECTS_DIR = build
    error("GRASPIT environment variable not set")
 }
 
-INCLUDEPATH += $(GRASPIT) $(GRASPIT)/qjson4 $(GRASPIT)/cmdline
+INCLUDEPATH += $(GRASPIT) $(GRASPIT)/qjson4 $(GRASPIT)/include $(GRASPIT)/cmdline
 
 # Mongo Driver headers
 INCLUDEPATH += /home/timchunght/graspit_data_gen/mongo-cxx-driver/build/install/include
