@@ -46,10 +46,10 @@ public:
 
 protected:
   void startPlanner();
-  void uploadResults();
+  void uploadResult(int result_idx);
   void stepPlanner();
   mongo::BSONObj toMongoGrasp(GraspPlanningState *gps, QString energyType);
-  mongo::BSONObj toMongoTactileGrasp(GraspPlanningState *gps, QString energyType);
+  mongo::BSONObj toMongoTactileGrasp(GraspPlanningState *gps, QString energyType, std::vector<SensorReading> &sensorReadings);
   void toMongoGraspBuilder(GraspPlanningState *gps, QString energyType, mongo::BSONObjBuilder *grasp);
 
   bool getSimHandSensors(World * w, std::vector<SensorReading> &sensorReadings);
@@ -64,6 +64,8 @@ private:
   bool plannerFinished;
   bool evaluatingGrasps;
   int myInteger;
+
+  int currently_uploading_result_idx;
   QString dbName;
 //  std::string dbName;
 //  QString myQStr;
