@@ -17,6 +17,8 @@ class EGPlanner;
 class GraspPlanningState;
 class GraspableBody;
 class Hand;
+class SensorReading;
+class World;
 
 
 
@@ -48,6 +50,8 @@ protected:
   void stepPlanner();
   mongo::BSONObj toMongoGrasp(GraspPlanningState *gps, QString energyType);
   void toMongoGraspBuilder(GraspPlanningState *gps, QString energyType, mongo::BSONObjBuilder *grasp);
+
+  bool getSimHandSensors(World * w, std::vector<SensorReading> &sensorReadings);
 private:
 
   EGPlanner *mPlanner;

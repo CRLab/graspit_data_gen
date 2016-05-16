@@ -17,6 +17,9 @@
 #include <include/EGPlanner/searchState.h>
 #include <include/EGPlanner/energy/searchEnergy.h>
 
+#include <include/SensorInterface.h>
+#include <include/debug.h>
+
 #include <include/grasp.h>
 #include <include/triangle.h>
 
@@ -35,6 +38,18 @@ using mongo::BSONObjBuilder;
 using mongo::BSONElement;
 using namespace mongo;
 
+struct SensorReading
+{
+    vec3 location;
+    Quaternion orientation;
+    double force;
+
+    void printMe() const {
+        DBGA(" force: " << force <<
+             " {" << location.x() << ", " << location.y() << ", " << location.z() << "} " <<
+             " [" << orientation.w << ", " << orientation.x << ", " << orientation.y << ", " << orientation.z << "]");
+    }
+};
 
 GraspGenerationPlugin::GraspGenerationPlugin() :
     mPlanner(NULL),
@@ -187,13 +202,6 @@ void GraspGenerationPlugin::startPlanner()
     mPlanner = new SimAnnPlanner(mHand);
     ((SimAnnPlanner*)mPlanner)->setModelState(mHandObjectState);
 
-//    mPlanner = new GuidedPlanner(mHand);
-//    ((SimAnnPlanner*)mPlanner)->setModelState(mHandObjectState);
-
-//        mPlanner = new OnLinePlanner(mHand);
-//        ((SimAnnPlanner*)mPlanner)->setModelState(mHandObjectState);
-
-
 
     mPlanner->setEnergyType(ENERGY_CONTACT_QUALITY);
     mPlanner->setContactType(CONTACT_PRESET);
@@ -256,6 +264,40 @@ mongo::BSONObj GraspGenerationPlugin::toMongoGrasp(GraspPlanningState *gps, QStr
     toMongoGraspBuilder(gps, energyType, &grasp);
 
     return grasp.obj();
+}
+
+bool
+GraspGenerationPlugin::getSimHandSensors(World * w, std::vector<SensorReading> &sensorReadings)
+{
+    for(int sensorInd = 0; sensorInd < w->getNumSensors(); sensorInd ++) {
+        QString str;
+        QTextStream qts(&str, QIODevice::WriteOnly);
+
+        w->getSensor(sensorInd)->updateSensorModel();
+        w->getSensor(sensorInd)->outputSensorReadings(qts);
+
+        char sensorType[20];
+        //bounding box of the sensor
+        double lx, ly, lz, rx, ry, rz;
+        //force and torque
+        double fx, fy, fz, tx, ty, tz;
+        sscanf(str.toStdString().c_str(), "%s %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", sensorType,
+            &lx, &ly, &lz, &rx, &ry, &rz,
+            &fx, &fy, &fz, &tx, &ty, &tz);
+
+        //get the contact orientation
+        transf sensorInWorld = w->getSensor(sensorInd)->getSensorTran(); // considered as world-to-sensor transform
+        transf handInWorld = w->getCurrentHand()->getTran(); // considered as world-to-hand transform
+        transf sensorInHand = sensorInWorld * handInWorld.inverse(); // considered as hand-to-sensor = hand-to-world * world-to-sensor
+
+        SensorReading sr;
+        sr.force = fz;
+        sr.location = sensorInHand.translation();
+        sr.orientation = sensorInHand.rotation();
+        sensorReadings.push_back(sr);
+    }
+
+    return true;
 }
 
 void GraspGenerationPlugin::toMongoGraspBuilder(GraspPlanningState *gps, QString energyType, mongo::BSONObjBuilder *grasp)
