@@ -23,20 +23,33 @@ OBJECTS_DIR = build
     #/home/jvarley/graspit_data_gen/mongo-cxx-driver/
 }
 
-INCLUDEPATH += $(GRASPIT) $(GRASPIT)/qjson4 $(GRASPIT)/include $(GRASPIT)/cmdline
+INCLUDEPATH += include include/plugin_states $(GRASPIT) $(GRASPIT)/qjson4 $(GRASPIT)/include $(GRASPIT)/cmdline
 
 # Mongo Driver headers
 INCLUDEPATH += $(MONGO_CXX_PATH)/build/install/include
 
 
-DEPENDPATH += $(GRASPIT)/src 
+DEPENDPATH += $(GRASPIT)/src src src/plugin_states
 
 HEADERS += $(GRASPIT)/include/plugin.h \
-    graspGenerationPlugin.h
+    include/graspGenerationPlugin.h \
+    include/mongoUtils.h \
+    include/modelInfo.h \
+    include/sensorReading.h \
+    include/plugin_states/pluginState.h \
+    include/plugin_states/planningState.h \
+    include/plugin_states/evaluationState.h \
+    include/plugin_states/lazyInitState.h
 
 SOURCES += \
-    main.cpp \
-    graspGenerationPlugin.cpp
+    src/main.cpp \
+    src/graspGenerationPlugin.cpp\
+    src/mongoUtils.cpp \
+    src/modelInfo.cpp \
+    src/plugin_states/pluginState.cpp \
+    src/plugin_states/planningState.cpp \
+    src/plugin_states/evaluationState.cpp \
+    src/plugin_states/lazyInitState.cpp
 
 # Mongo Driver shared lib
 LIBS += -L$(MONGO_CXX_PATH)/build/install/lib -lmongoclient
