@@ -118,13 +118,8 @@ void EvaluationState::evaluateGrasp(int result_idx)
 
         BSONObjBuilder perturbationObj;
 
-        BSONElement f0_id;
-        planningFrameObj.getObjectID(f0_id);
-        BSONElement f1_id;
-        perturbedPlanningFrameObj.getObjectID(f1_id);
-
-        perturbationObj.append("f0", f0_id);
-        perturbationObj.append("f1", f1_id);
+        perturbationObj.append("f0", planningFrameObj.getField("_id").OID());
+        perturbationObj.append("f1", perturbedPlanningFrameObj.getField("_id").OID());
         perturbationObj.append("transf", MongoUtils::toBSON(perturbation) );
 
         plugin->c->insert(perturbationsCollection, perturbationObj.obj());
