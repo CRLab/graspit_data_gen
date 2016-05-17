@@ -34,6 +34,7 @@ public:
   virtual int init(int argc, char **argv);
   virtual int mainLoop();
 
+
   //shared variables that are accessed by the different states of the plugin.
   EGPlanner *mPlanner;
   GraspableBody *mObject;

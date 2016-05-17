@@ -54,9 +54,22 @@ void EvaluationState::evaluateGrasp(int result_idx)
     std::vector<SensorReading> sensorReadings;
     getSimHandSensors(graspItGUI->getMainWorld(), sensorReadings);
 
-    std::string mongoCollectionName = (plugin->dbName + QString(".grasps")).toStdString();
+    std::string planningFrameCollection = (plugin->dbName + QString(".grasps")).toStdString();
+    std::string perturbationsCollection = (plugin->dbName + QString(".perturbations")).toStdString();
 
-    BSONArrayBuilder children;
+
+    BSONObjBuilder planningFrame;
+    planningFrame.genOID();
+    planningFrame.append("grasp", MongoUtils::toBSON(&gps));
+    planningFrame.append("tactile", MongoUtils::toBSON(sensorReadings));
+    planningFrame.append("model", MongoUtils::toBSON(plugin->modelJson));
+
+    BSONObj planningFrameObj = planningFrame.obj();
+
+    std::cout << "grasp has: Energy: " << gps.getEnergy() << std::endl;
+    std::cout << "grasp has: Volume: " << gps.getVolume() << std::endl;
+    std::cout << "grasp has: Epsilon: " << gps.getEpsilonQuality() << std::endl;
+
     for(unsigned int j=0; j < perturbations.size(); j++)
     {
         transf perturbation = perturbations.at(j);
@@ -70,59 +83,56 @@ void EvaluationState::evaluateGrasp(int result_idx)
 
         transf currentTran = plugin->mHand->getTran();
         transf newTran = perturbation*currentTran  ;
-
-        std::cout << "peturbing hand" << std::endl;
         plugin->mHand->setTran(newTran);
 
-        std::cout << "opening hand" << std::endl;
         plugin->mHand->autoGrasp(true, -1.0, false);
-        std::cout << "reverse approach to contact" << std::endl;
         plugin->mHand->approachToContact(-200);
         graspItGUI->getIVmgr()->getViewer()->render();
 
-        std::cout << "reenable collisions" << std::endl;
         graspItGUI->getMainWorld()->toggleAllCollisions(true);
 
-        std::cout << "approachToContact" << std::endl;
         plugin->mHand->approachToContact(200);
-        std::cout << "autoGrasp" << std::endl;
         plugin->mHand->autoGrasp(true, 1.0, false);
         graspItGUI->getIVmgr()->getViewer()->render();
 
-        std::cout << "computing energy" << std::endl;
         GraspPlanningState peturbedState(plugin->mHand);
         peturbedState.setObject(gps.getObject());
-        std::cout << "saving current hand state" << std::endl;
         peturbedState.saveCurrentHandState();
-        std::cout << "filling in grasp planning state" << std::endl;
+
         fillGraspPlanningState(peturbedState);
 
-        std::cout << "getting tactile readings" << std::endl;
+        std::cout << "peturbed state has: Energy: " << peturbedState.getEnergy() << std::endl;
+        std::cout << "peturbed state has: Volume: " << peturbedState.getVolume() << std::endl;
+        std::cout << "peturbed state has: Epsilon: " << peturbedState.getEpsilonQuality() << std::endl;
+
         std::vector<SensorReading> peturbedSensorReadings;
         getSimHandSensors(graspItGUI->getMainWorld(), peturbedSensorReadings);
 
-        std::cout << "converting to bson" << std::endl;
         BSONObjBuilder peturbedPlanningFrame;
+        peturbedPlanningFrame.genOID();
         peturbedPlanningFrame.append("grasp", MongoUtils::toBSON(&peturbedState));
         peturbedPlanningFrame.append("tactile", MongoUtils::toBSON(peturbedSensorReadings));
         peturbedPlanningFrame.append("model", MongoUtils::toBSON(plugin->modelJson));
-        peturbedPlanningFrame.append("perturbation", MongoUtils::toBSON(perturbation));
 
-        children.append(peturbedPlanningFrame.obj());
+        BSONObj perturbedPlanningFrameObj = peturbedPlanningFrame.obj();
 
-        std::cout << "uploading peturbed grasp" << std::endl;
-        plugin->c->insert(mongoCollectionName, peturbedPlanningFrame.obj());
+        BSONObjBuilder perturbationObj;
+
+        BSONElement f0_id;
+        planningFrameObj.getObjectID(f0_id);
+        BSONElement f1_id;
+        perturbedPlanningFrameObj.getObjectID(f1_id);
+
+        perturbationObj.append("f0", f0_id);
+        perturbationObj.append("f1", f1_id);
+        perturbationObj.append("transf", MongoUtils::toBSON(perturbation) );
+
+        plugin->c->insert(perturbationsCollection, perturbationObj.obj());
+        plugin->c->insert(planningFrameCollection, perturbedPlanningFrameObj);
     }
 
-    std::cout << "building grasp" << std::endl;
-    BSONObjBuilder planningFrame;
-    planningFrame.append("grasp", MongoUtils::toBSON(&gps));
-    planningFrame.append("tactile", MongoUtils::toBSON(sensorReadings));
-    planningFrame.append("model", MongoUtils::toBSON(plugin->modelJson));
-    planningFrame.append("children", children.obj());
-
     std::cout << "uploading grasp" << std::endl;
-    plugin->c->insert(mongoCollectionName, planningFrame.obj());
+    plugin->c->insert(planningFrameCollection, planningFrameObj);
 }
 
 
