@@ -10,6 +10,7 @@
 #include "graspitGUI.h"
 #include "EGPlanner/egPlanner.h"
 #include "ivmgr.h"
+#include "grasp.h"
 
 using namespace mongo;
 
@@ -23,8 +24,16 @@ EvaluationState::EvaluationState(GraspGenerationPlugin *p): PluginState(),
     perturbations.push_back(rotXYZ(-0.25, 0, 0));
     perturbations.push_back(rotXYZ(0, -0.25, 0));
     perturbations.push_back(rotXYZ(0, 0, -0.25));
+    perturbations.push_back(rotXYZ(0.5, 0, 0));
+    perturbations.push_back(rotXYZ(0, 0.5, 0));
+    perturbations.push_back(rotXYZ(0, 0, 0.5));
+    perturbations.push_back(rotXYZ(-0.5, 0, 0));
+    perturbations.push_back(rotXYZ(0, -0.5, 0));
+    perturbations.push_back(rotXYZ(0, 0, -0.5));
     perturbations.push_back(translate_transf(vec3(0,0, -20)));
     perturbations.push_back(translate_transf(vec3(0,0, 20)));
+    perturbations.push_back(translate_transf(vec3(0,0, -40)));
+    perturbations.push_back(translate_transf(vec3(0,0, 40)));
 }
 
 int EvaluationState::mainLoop()
@@ -54,9 +63,8 @@ void EvaluationState::evaluateGrasp(int result_idx)
     std::vector<SensorReading> sensorReadings;
     getSimHandSensors(graspItGUI->getMainWorld(), sensorReadings);
 
-    std::string planningFrameCollection = (plugin->dbName + QString(".grasps")).toStdString();
-    std::string perturbationsCollection = (plugin->dbName + QString(".perturbations")).toStdString();
-
+    std::string planningFrameCollection = (plugin->dbName + QString(".grasps_v2")).toStdString();
+    std::string perturbationsCollection = (plugin->dbName + QString(".perturbations_v2")).toStdString();
 
     BSONObjBuilder planningFrame;
     planningFrame.genOID();
@@ -101,9 +109,9 @@ void EvaluationState::evaluateGrasp(int result_idx)
 
         fillGraspPlanningState(peturbedState);
 
-        std::cout << "peturbed state has: Energy: " << peturbedState.getEnergy() << std::endl;
-        std::cout << "peturbed state has: Volume: " << peturbedState.getVolume() << std::endl;
-        std::cout << "peturbed state has: Epsilon: " << peturbedState.getEpsilonQuality() << std::endl;
+//        std::cout << "peturbed state has: Energy: " << peturbedState.getEnergy() << std::endl;
+//        std::cout << "peturbed state has: Volume: " << peturbedState.getVolume() << std::endl;
+//        std::cout << "peturbed state has: Epsilon: " << peturbedState.getEpsilonQuality() << std::endl;
 
         std::vector<SensorReading> peturbedSensorReadings;
         getSimHandSensors(graspItGUI->getMainWorld(), peturbedSensorReadings);
@@ -152,11 +160,28 @@ void EvaluationState::fillGraspPlanningState(GraspPlanningState &gps)
     gps.setEnergy(new_planned_energy);
     gps.saveCurrentHandState();
 
+//    plugin->mHand->getGrasp()->collectContacts();
+//    plugin->mHand->getGrasp()->updateWrenchSpaces();
+
     QualEpsilon mQualEpsilon(plugin->mHand->getGrasp(), QString("Grasp_recorder_qm_epsilon"), "L1 Norm");
     double epsilonQuality = mQualEpsilon.evaluate();
 
     QualVolume mQualVolume(plugin->mHand->getGrasp(), QString("Grasp_recorder_qm_volume"), "L1 Norm");
     double volumeQuality = mQualVolume.evaluate();
+
+//    plugin->mHand->getGrasp()->collectVirtualContacts();
+//    plugin->mHand->getGrasp()->updateWrenchSpaces();
+
+//    QualEpsilon mQualEpsilonVirt(plugin->mHand->getGrasp(), QString("Grasp_recorder_qm_epsilon_virt"), "L1 Norm");
+//    double epsilonQualityVirt = mQualEpsilonVirt.evaluate();
+
+//    QualVolume mQualVolumeVirt(plugin->mHand->getGrasp(), QString("Grasp_recorder_qm_volume_virt"), "L1 Norm");
+//    double volumeQualityVirt = mQualVolumeVirt.evaluate();
+
+    std::cout << "Epsilon: " << epsilonQuality << std::endl;
+    std::cout << "Volume: " << volumeQuality << std::endl;
+//    std::cout << "EpsilonVirt: " << epsilonQualityVirt << std::endl;
+//    std::cout << "VolumeVirt: " << volumeQualityVirt << std::endl;
 
     gps.setVolume(volumeQuality);
     gps.setEpsilonQuality(epsilonQuality);
