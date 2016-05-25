@@ -41,13 +41,23 @@ namespace MongoUtils
         BSONArrayBuilder translation;
         BSONArrayBuilder rotation;
         BSONArrayBuilder dof;
+        BSONArrayBuilder fullDof;
 
         Hand *hand = gps->getHand();
-        GraspableBody *body = gps->getObject();
+
 
         double dofVals [hand->getNumDOF()];
         hand->getDOFVals(dofVals);
 
+
+
+        QString dofs;
+
+        QTextStream dofStream(&dofs,QIODevice::ReadWrite);
+
+        hand->writeDOFVals(dofStream);
+
+        std::cout << "dofstream: " << dofs.toStdString().c_str() << std::endl;
         transf hand_pose = hand->getPalm()->getTran();
 
         for(int dof_idx = 0; dof_idx < hand->getNumDOF(); dof_idx ++)
@@ -74,6 +84,7 @@ namespace MongoUtils
         grasp.append("hand", hand->getDBName().toStdString());
         grasp.append("energy", energy.obj());
         grasp.appendArray("dof", dof.arr());
+        grasp.append("full_dof", dofs.toStdString());
         grasp.append("pose", pose.obj());
 
         return grasp.obj();

@@ -1,4 +1,4 @@
-export MONGO_URL=mongodb://localhost:27017/data_gen
+export MONGO_URL=mongodb://localhost:27017/data_gen_v3
 export MONGO_CXX_PATH=~/graspit_data_gen/mongo-cxx-driver/
 export GRASPIT=~/graspit
 export GRASPIT_PLUGIN_DIR=$PWD/lib 

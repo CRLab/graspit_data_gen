@@ -63,8 +63,8 @@ void EvaluationState::evaluateGrasp(int result_idx)
     std::vector<SensorReading> sensorReadings;
     getSimHandSensors(graspItGUI->getMainWorld(), sensorReadings);
 
-    std::string planningFrameCollection = (plugin->dbName + QString(".grasps_v2")).toStdString();
-    std::string perturbationsCollection = (plugin->dbName + QString(".perturbations_v2")).toStdString();
+    std::string planningFrameCollection = (plugin->dbName + QString(".grasps")).toStdString();
+    std::string perturbationsCollection = (plugin->dbName + QString(".perturbations")).toStdString();
 
     BSONObjBuilder planningFrame;
     planningFrame.genOID();
