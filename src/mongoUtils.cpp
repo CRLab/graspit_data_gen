@@ -41,7 +41,6 @@ namespace MongoUtils
         BSONArrayBuilder translation;
         BSONArrayBuilder rotation;
         BSONArrayBuilder dof;
-        BSONArrayBuilder fullDof;
 
         Hand *hand = gps->getHand();
 

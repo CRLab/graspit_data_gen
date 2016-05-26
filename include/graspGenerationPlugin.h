@@ -33,7 +33,7 @@ public:
   ~GraspGenerationPlugin();
   virtual int init(int argc, char **argv);
   virtual int mainLoop();
-
+  QJsonObject loadModel();
 
   //shared variables that are accessed by the different states of the plugin.
   EGPlanner *mPlanner;
@@ -49,6 +49,7 @@ protected:
   void evaluateGrasp(int result_idx);
   bool getSimHandSensors(World * w, std::vector<SensorReading> &sensorReadings);
   void fillGraspPlanningState(GraspPlanningState &gps);
+
 
 private:
 

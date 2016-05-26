@@ -16,8 +16,11 @@ LazyInitState::LazyInitState(GraspGenerationPlugin *p): PluginState(),
 
 int LazyInitState::mainLoop()
 {
-    DbModelLoader loader;
-    plugin->modelJson = loader.loadRandomModel();
+
+//     DbModelLoader loader;
+//     plugin->modelJson = loader.loadRandomModel();
+
+    plugin->modelJson = plugin->loadModel();
 
     plugin->mObject = graspItGUI->getMainWorld()->getGB(0);
     plugin->mObject->setMaterial(5);//rubber

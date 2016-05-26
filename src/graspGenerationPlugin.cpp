@@ -10,6 +10,13 @@
 #include <include/graspitGUI.h>
 #include <include/ivmgr.h>
 
+// qjson: might need to remove some of them
+#include "qjson4/QJsonArray.h"
+#include "qjson4/QJsonDocument.h"
+#include "qjson4/QJsonObject.h"
+#include "qjson4/QJsonParseError.h"
+#include "include/dbModelLoader.h"
+
 #include <include/EGPlanner/egPlanner.h>
 #include <include/EGPlanner/simAnnPlanner.h>
 #include <include/EGPlanner/onLinePlanner.h>
@@ -141,4 +148,33 @@ int GraspGenerationPlugin::mainLoop()
 
 
 
+// This is a custom helper to load hardcoded model while not breaking the dbModelLoader interface
+QJsonObject GraspGenerationPlugin::loadModel() {
 
+
+    QJsonObject model;
+    QString hand("BarrettBH8_280_Tactile");
+    model["url"] = "http://borneo.cs.columbia.edu/modelnet/vision.cs.princeton.edu/projects/2014/ModelNet/data/bottle/bottle_000000161/bottle_000000161.off";
+    model["name"] = "bottle-2HcMVYKKB";
+    model["material"] = "rubber";
+    model["dimension"] = 100;
+
+
+//    QString url = modelJson["url"].toString();
+//    QString modelName = modelJson["name"].toString();
+//    QString material = modelJson["material"].toString();
+//    double dimension = modelJson["dimension"].toDouble();
+
+//    return model.obj();
+    DbModelLoader loader;
+    QString robotPath = QString(getenv("GRASPIT")) + QString("/models/robots/") + hand + QString("/") + hand + QString(".xml");
+
+
+//    std::cout << url.toStdString().c_str() << std::endl;
+
+    graspItGUI->getMainWorld()->importRobot(robotPath.toStdString().c_str());
+
+    loader.loadModelFromUrl(model["url"].toString(), model["name"].toString(), model["material"].toString(), model["dimension"].toDouble());
+
+    return model;
+ }
